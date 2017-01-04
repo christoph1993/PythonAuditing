@@ -197,6 +197,7 @@ class Audit:
             for c, n in enumerate(counter):
                 if 'Local Area' in n:
                     connection = n
+                    logging.debug('Connection is ' + str(connection))
             while i > 0:
                 last_tot = (counter[connection].bytes_sent, counter[connection].bytes_recv)
                 time.sleep(down_time)
@@ -298,10 +299,13 @@ def Auditing(audit):
         exe_files = ["WRSA.exe", "StaffRoster2.exe.config", "TimeLogging2.exe", "QPOS.exe", "LogMeIn.exe"]
         task_query = ["Backup", "SyncAdminFiles", "Update_QPOS"]
         upload, download = audit.Calc_LAC_network_speed()
-        logging.debug('Upload and Download Done')
+        logging.debug('Upload and Download Done - ' + str(upload) + ' ' + str(download))
         ip = audit.network_ip()
+        logging.debug('Ip Address : ' + str(ip))
         hostname = audit.network_hostname()
+        logging.debug('Hostname : ' + str(hostname))
         mac = audit.network_mac()
+        logging.debug('Mac : ' + str(mac))
         this_os = audit.os_version()
         key = audit.license_key()
         mem_total = audit.mem_total()
