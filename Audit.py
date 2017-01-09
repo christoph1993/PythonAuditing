@@ -61,10 +61,11 @@ class Audit:
 
     def launchNoConsole(self, command):
         """Launches 'command' windowless and waits until finished"""
+        devnull = open(os.devnull, 'wb')
         subprocess.STARTF_USESHOWWINDOW = 1
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        return subprocess.Popen(command, startupinfo=startupinfo, stdout=subprocess.PIPE, shell=True).communicate()
+        return subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=devnull).communicate()
 
     def os_version(self):
         system = platform.system()
@@ -123,7 +124,7 @@ class Audit:
         return space
 
     def task(self, tasks):
-        cmd = "schtasks /QUERY /TN"
+        cmd = "schtasks /QUERY"
         running = []
         for task in tasks:
             if task in self.launchNoConsole(cmd)[0]:
