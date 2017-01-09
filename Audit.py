@@ -123,7 +123,7 @@ class Audit:
         return space
 
     def task(self, tasks):
-        cmd = "schtasks /query"
+        cmd = "schtasks /QUERY /TN"
         running = []
         for task in tasks:
             if task in self.launchNoConsole(cmd)[0]:
