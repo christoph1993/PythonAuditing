@@ -54,6 +54,7 @@ class Audit:
     IS_DEFAULT_PRINTER = 1
     NOT_DEFAULT_PRINTER = 0
     ADDRESS = 'http://192.168.150.100:300'
+    TASK_STATE = {0:'Unknown', 1:'Disabled', 2:'Queued', 3:'Ready', 4:'Running'}
 
     def __init__(self):
         r = requests.get(self.ADDRESS + '/add/config')
@@ -122,10 +123,7 @@ class Audit:
         scheduler.Connect()
         folder = [scheduler.GetFolder('\\')].pop(0)
         for task in folder.GetTasks(0):
-            if str(task.Path)[1:] in tasks:
-                running.append([(str(task.Path)[1:], 1)])
-            else:
-                running.append([(str(task.Path)[1:], 0)])
+            running.append([(str(task.Path)[1:], self.TASK_STATE[task.State], task.LastRunTime, task.LastTaskResult)])
         return running
 
     def exe_exists(self, exe):
