@@ -10,15 +10,15 @@ import platform
 import socket
 import win32api
 import win32print
+import win32com.client
 import uuid
-from winreg import *
+from _winreg import *
 import os
 import math
 import time
 import requests
 from itertools import chain
 import datetime
-import subprocess
 import logging
 
 '''
@@ -53,19 +53,12 @@ class Audit:
     SECONDSINHOUR = 3600
     IS_DEFAULT_PRINTER = 1
     NOT_DEFAULT_PRINTER = 0
+    ADDRESS = 'http://192.168.150.100:300'
 
     def __init__(self):
-        r = requests.get('http://192.168.150.100:3000/add/config')
+        r = requests.get(self.ADDRESS + '/add/config')
         self.config = r.json()
         self.uid = str(uuid.uuid4())
-
-    def launchNoConsole(self, command):
-        """Launches 'command' windowless and waits until finished"""
-        devnull = open(os.devnull, 'wb')
-        subprocess.STARTF_USESHOWWINDOW = 1
-        startupinfo = subprocess.STARTUPINFO()
-        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        return subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=devnull).communicate()
 
     def os_version(self):
         system = platform.system()
@@ -124,13 +117,15 @@ class Audit:
         return space
 
     def task(self, tasks):
-        cmd = "schtasks /QUERY"
         running = []
-        for task in tasks:
-            if task in self.launchNoConsole(cmd)[0]:
-                running.append([(task, 1)])
+        scheduler = win32com.client.Dispatch("Schedule.Service")
+        scheduler.Connect()
+        folder = [scheduler.GetFolder('\\')].pop(0)
+        for task in folder.GetTasks(0):
+            if str(task.Path)[1:] in tasks:
+                running.append([(str(task.Path)[1:], 1)])
             else:
-                running.append([(task, 0)])
+                running.append([(str(task.Path)[1:], 0)])
         return running
 
     def exe_exists(self, exe):
@@ -295,7 +290,7 @@ def Auditing(audit):
             'functions': functions,
             'data': send
         }
-        r = requests.post('http://192.168.150.100:3000/add', json=payload)
+        r = requests.post(audit.ADDRESS + 'add', json=payload)
     else:
         exe_files = ["WRSA.exe", "StaffRoster2.exe.config", "TimeLogging2.exe", "QPOS.exe", "LogMeIn.exe"]
         task_query = ["Backup", "SyncAdminFiles", "Update_QPOS"]
@@ -351,7 +346,7 @@ def Auditing(audit):
                 'proxyEnabled': proxyEnabled
             }]
         }
-        r = requests.post('http://192.168.150.100:3000/add', json=payload)
+        r = requests.post(audit.ADDRESS + '/add', json=payload)
 
 def main():
     logging.basicConfig(filename='C:\Users\user\AuditLogs.log',level=logging.DEBUG)
