@@ -53,13 +53,16 @@ class Audit:
     SECONDSINHOUR = 3600
     IS_DEFAULT_PRINTER = 1
     NOT_DEFAULT_PRINTER = 0
-    ADDRESS = 'http://192.168.150.100:300'
+    ADDRESS = 'http://192.168.150.100:3000'
     TASK_STATE = {0:'Unknown', 1:'Disabled', 2:'Queued', 3:'Ready', 4:'Running'}
 
     def __init__(self):
         r = requests.get(self.ADDRESS + '/add/config')
         self.config = r.json()
         self.uid = str(uuid.uuid4())
+
+    def pytimeTOdatetime(self, pytime):
+        return datetime.datetime.utcfromtimestamp(int (pytime)).strftime('%Y-%m-%d %H:%M:%S')
 
     def os_version(self):
         system = platform.system()
@@ -117,13 +120,13 @@ class Audit:
                 space.append(0)
         return space
 
-    def task(self, tasks):
+    def task(self):
         running = []
         scheduler = win32com.client.Dispatch("Schedule.Service")
         scheduler.Connect()
         folder = [scheduler.GetFolder('\\')].pop(0)
         for task in folder.GetTasks(0):
-            running.append([(str(task.Path)[1:], self.TASK_STATE[task.State], task.LastRunTime, task.LastTaskResult)])
+            running.append([(str(task.Path)[1:], self.TASK_STATE[task.State], self.pytimeTOdatetime(task.LastRunTime), task.LastTaskResult)])
         return running
 
     def exe_exists(self, exe):
@@ -177,6 +180,7 @@ class Audit:
         with OpenKey(HKEY_LOCAL_MACHINE, r'SOFTWARE\Microsoft\Windows NT\CurrentVersion', 0,
                      KEY_ALL_ACCESS + KEY_WOW64_64KEY) as ok:
             v, t = QueryValueEx(ok, 'DigitalProductId')
+            logging.info(str(v))
             return (DecodeProductKey(v))
 
     def Calc_LAC_network_speed(self):
@@ -271,13 +275,10 @@ def Auditing(audit):
     if audit.config['Use']:
         functions = audit.config['functions']
         files = audit.config['exes']
-        tasks = audit.config['tasks']
         send = []
         for _, item in enumerate(functions):
             if item == 'exe_exists':
                 test = getattr(audit, str(item))(files)
-            elif item == 'task':
-                test = getattr(audit, str(item))(tasks)
             else:
                 test = getattr(audit, str(item))()
             send.append({str(item): test})
@@ -309,7 +310,7 @@ def Auditing(audit):
         cores = audit.cpu_cores()
         harddisks = audit.harddisks()
         space = audit.space_info()
-        tasks = audit.task(task_query)
+        tasks = audit.task()
         processes = audit.processes()
         exes = audit.exe_exists(exe_files)
         printers = audit.printerinfo()
