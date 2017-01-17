@@ -90,7 +90,7 @@ class Audit:
         process = []
         for proc in psutil.process_iter():
             try:
-                process.append([(proc.name(), proc.pid, proc.username(), round(proc.memory_percent(), 2), proc.cpu_percent())])
+                process.append([(proc.name(), proc.pid, proc.username(), round(proc.memory_percent(), 2), (proc.cpu_percent(interval=1) / psutil.cpu_count()))])
             except psutil.AccessDenied:
                 process.append([(proc.name(), proc.pid, "Access Denied", round(proc.memory_percent(), 2), 0.0)])
         return process
