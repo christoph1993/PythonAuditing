@@ -365,11 +365,13 @@ def Auditing(audit):
         r = requests.post(audit.ADDRESS + '/add', json=payload)
 
 def main():
-    logging.basicConfig(filename='C:\Users\user\AuditLogs.log',level=logging.DEBUG)
+    USERPROFILE = ExpandEnvironmentStrings(u'%USERPROFILE%')
+    logging.basicConfig(filename=USERPROFILE + '\AuditLogs.log',level=logging.DEBUG)
     logging.info('' + str(datetime.datetime.now()) + '')
     try:
         audit = Audit()
         Auditing(audit)
+        logging.info('Finished at: ' + str(datetime.datetime.now()))
         audit = None
     except [WindowsError, OSError, EnvironmentError, Exception, requests.HTTPError, requests.ConnectionError]:
         logging.error("Something Failed", exc_info=True)
