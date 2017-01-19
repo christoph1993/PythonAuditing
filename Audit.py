@@ -328,7 +328,6 @@ def Auditing(audit):
         processes = audit.processes()
         exes = audit.exe_exists(exe_files)
         programs = audit.installedPrograms()
-        print(programs)
         printers = audit.printerinfo()
         uptime = audit.upTime()
         timezone = audit.timeZone()
