@@ -322,6 +322,7 @@ def Auditing(audit):
         harddisks = audit.harddisks()
         space = audit.space_info()
         tasks = audit.task()
+        #programs = audit.installedPrograms()
         processes = audit.processes()
         exes = audit.exe_exists(exe_files)
         printers = audit.printerinfo()
