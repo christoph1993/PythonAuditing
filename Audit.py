@@ -159,7 +159,11 @@ class Audit:
         objSWbemServices = objWMIService.ConnectServer(strComputer, "root\cimv2")
         colItems = objSWbemServices.ExecQuery("Select * from Win32_Product")
         for item in colItems:
-            installed.append([(item.Name, item.Description, item.InstallDate, item.InstallLocattion, item.Version)])
+            if(item.InstallLocation == None):
+                installed.append([(item.Name, item.Description, item.InstallDate, 'No Location Available', item.Version)])
+            else:
+                installed.append([(item.Name, item.Description, item.InstallDate, item.installLocation, item.Version)])
+
         return installed
 
     def license_key(self):
@@ -302,8 +306,7 @@ def Auditing(audit):
         }
         r = requests.post(audit.ADDRESS + 'add', json=payload)
     else:
-        exe_files = ["WRSA.exe", "StaffRoster2.exe.config", "TimeLogging2.exe", "QPOS.exe", "LogMeIn.exe"]
-        task_query = ["Backup", "SyncAdminFiles", "Update_QPOS"]
+        exe_files = ["WRSA.exe", "QPOS.exe"]
         upload, download = audit.Calc_LAC_network_speed()
         logging.debug('Upload and Download Done - ' + str(upload) + ' ' + str(download))
         ip = audit.network_ip()
@@ -322,9 +325,10 @@ def Auditing(audit):
         harddisks = audit.harddisks()
         space = audit.space_info()
         tasks = audit.task()
-        #programs = audit.installedPrograms()
         processes = audit.processes()
         exes = audit.exe_exists(exe_files)
+        programs = audit.installedPrograms()
+        print(programs)
         printers = audit.printerinfo()
         uptime = audit.upTime()
         timezone = audit.timeZone()
@@ -339,6 +343,7 @@ def Auditing(audit):
                 'hostname': hostname,
                 'mac': mac,
                 'tasks': tasks,
+                'installedPrograms': programs,
                 'exes': exes,
                 'processes': processes,
                 'harddisks': harddisks,
