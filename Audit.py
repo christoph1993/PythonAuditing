@@ -151,6 +151,17 @@ class Audit:
             exes.append((success[i], version[i]))
         return exes
 
+    # To replace exe_exists. Thanks to https://gallery.technet.microsoft.com/ScriptCenter/154dcae0-57a1-4c6e-8f9f-b215904485b7/
+    def installedPrograms(self):
+        installed = []
+        strComputer = "."
+        objWMIService = win32com.client.Dispatch("WbemScripting.SWbemLocator")
+        objSWbemServices = objWMIService.ConnectServer(strComputer, "root\cimv2")
+        colItems = objSWbemServices.ExecQuery("Select * from Win32_Product")
+        for item in colItems:
+            installed.append([(item.Name, item.Description, item.InstallDate, item.InstallLocattion, item.Version)])
+        return installed
+
     def license_key(self):
         def DecodeProductKey(digitalProductId):
             _map = list('BCDFGHJKMPQRTVWXY2346789')
