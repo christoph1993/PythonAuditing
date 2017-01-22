@@ -62,7 +62,7 @@ class Audit:
         self.uid = str(uuid.uuid4())
 
     def pytimeTOdatetime(self, pytime):
-        return datetime.datetime.utcfromtimestamp(int (pytime)).strftime('%Y-%m-%d %H:%M:%S')
+        return datetime.datetime.utcfromtimestamp(int(pytime)).strftime('%Y-%m-%d %H:%M:%S')
 
     def os_version(self):
         system = platform.system()
@@ -92,7 +92,7 @@ class Audit:
             try:
                 process.append([(proc.name(), proc.pid, proc.username(), round(proc.memory_percent(), 2), (proc.cpu_percent(interval=1) / psutil.cpu_count()))])
             except psutil.AccessDenied:
-                process.append([(proc.name(), proc.pid, "Access Denied", round(proc.memory_percent(), 2), 0.0)])
+                process.append([(proc.name(), proc.pid, "Access Denied", round(proc.memory_percent(), 2), (proc.cpu_percent(interval=1) / psutil.cpu_count()))])
         return process
 
     def network_ip(self):
@@ -126,7 +126,11 @@ class Audit:
         scheduler.Connect()
         folder = [scheduler.GetFolder('\\')].pop(0)
         for task in folder.GetTasks(0):
-            running.append([(str(task.Path)[1:], self.TASK_STATE[task.State], self.pytimeTOdatetime(task.LastRunTime), task.LastTaskResult)])
+            try:
+                running.append([(str(task.Path)[1:], self.TASK_STATE[task.State], self.pytimeTOdatetime(task.LastRunTime), task.LastTaskResult)])
+            except:
+                running.append([(str(task.Path)[1:], self.TASK_STATE[task.State],'1970-01-01 00:00:00', task.LastTaskResult)])
+
         return running
 
     def exe_exists(self, exe):
