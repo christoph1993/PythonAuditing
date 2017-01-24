@@ -93,6 +93,8 @@ class Audit:
                 process.append([(proc.name(), proc.pid, proc.username(), round(proc.memory_percent(), 2), (proc.cpu_percent(interval=1) / psutil.cpu_count()))])
             except psutil.AccessDenied:
                 process.append([(proc.name(), proc.pid, "Access Denied", round(proc.memory_percent(), 2), (proc.cpu_percent(interval=1) / psutil.cpu_count()))])
+            except psutil.NoSuchProcess:
+                pass
         return process
 
     def network_ip(self):
@@ -119,6 +121,44 @@ class Audit:
             except OSError:
                 space.append(0)
         return space
+
+    def services(self):
+        running = []
+        areg = ConnectRegistry(None, HKEY_LOCAL_MACHINE)
+        akey = OpenKey(areg, r'System\CurrentControlSet\Services')
+        for i in range(1024):
+            try:
+                asubkey_name = EnumKey(akey, i)
+                asubkey = OpenKey(akey, asubkey_name)
+                query = ["Description", "ImagePath", "Start"]
+                try:
+                    description = QueryValueEx(asubkey, query[0])[0]
+                    description = str(description).translate(None, '@?')
+                    if "%" in description:
+                        _, environment, path = description.split("%")
+                        environment = u"%"+environment+u"%"
+                        environment = ExpandEnvironmentStrings(environment)
+                        description = environment + path
+                except:
+                    description = "Unknown"
+                try:
+                    ImagePath = QueryValueEx(asubkey, query[1])[0]
+                    ImagePath = str(ImagePath).translate(None, '@?')
+                    if "%" in ImagePath:
+                        _, environment, path = ImagePath.split("%")
+                        environment = u"%"+environment+u"%"
+                        environment = ExpandEnvironmentStrings(environment)
+                        ImagePath = environment + path
+                except:
+                    ImagePath = "Unknown"
+                try:
+                    start = QueryValueEx(asubkey, query[2])[0]
+                except:
+                    start = -1
+                running.append((asubkey_name, description, ImagePath, start))
+            except:
+                pass
+        return running
 
     def task(self):
         running = []
@@ -163,11 +203,10 @@ class Audit:
         objSWbemServices = objWMIService.ConnectServer(strComputer, "root\cimv2")
         colItems = objSWbemServices.ExecQuery("Select * from Win32_Product")
         for item in colItems:
-            if(item.InstallLocation == None):
+            if item.InstallLocation is None:
                 installed.append([(item.Name, item.Description, item.InstallDate, 'No Location Available', item.Version)])
             else:
                 installed.append([(item.Name, item.Description, item.InstallDate, item.installLocation, item.Version)])
-
         return installed
 
     def license_key(self):
@@ -337,6 +376,7 @@ def Auditing(audit):
         timezone = audit.timeZone()
         proxy = audit.proxyServer()
         proxyEnabled = audit.isProxyEnabled()
+        services = audit.services()
         payload = {
             'uuid': audit.uid,
             'data': [{
@@ -348,6 +388,7 @@ def Auditing(audit):
                 'tasks': tasks,
                 'installedPrograms': programs,
                 'exes': exes,
+                'services': services,
                 'processes': processes,
                 'harddisks': harddisks,
                 'space': space,
