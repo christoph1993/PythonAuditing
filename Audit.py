@@ -53,7 +53,7 @@ class Audit:
     SECONDSINHOUR = 3600
     IS_DEFAULT_PRINTER = 1
     NOT_DEFAULT_PRINTER = 0
-    ADDRESS = 'http://192.168.150.100:3000'
+    ADDRESS = r'http://audit.qbd.com.au:3000'
     TASK_STATE = {0:'Unknown', 1:'Disabled', 2:'Queued', 3:'Ready', 4:'Running'}
 
     def __init__(self):
