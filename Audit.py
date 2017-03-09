@@ -32,17 +32,10 @@ import logging
 # host - ip, name and MAC address - DONE
 # Processes - username that process is run under, path to process, PID - DONE
 
-Check following exes: - DONE
--Webroot
--Owncloud
--Time Logging
--StaffRoster2
--QPOS
-
-Check following scheduled tasks - DONE
-
 Add configuration for webserver location
 
+
+Currently optimised for WIN7
 '''
 
 
@@ -53,7 +46,7 @@ class Audit:
     SECONDSINHOUR = 3600
     IS_DEFAULT_PRINTER = 1
     NOT_DEFAULT_PRINTER = 0
-    ADDRESS = r'http://audit.qbd.com.au:3000'
+    ADDRESS = r'ENTER_SERVER_ADDRESS'
     TASK_STATE = {0:'Unknown', 1:'Disabled', 2:'Queued', 3:'Ready', 4:'Running'}
 
     def __init__(self):
@@ -173,28 +166,6 @@ class Audit:
 
         return running
 
-    def exe_exists(self, exe):
-        success = []
-        version = []
-        exes = []
-        paths = ("C:\\AppServer\\", "C:\\Program Files\\", "C:\\Program Files (x86)\\")
-        for element in exe:
-            for path, dirs, files in chain.from_iterable(os.walk(path) for path in paths):
-                if element in files:
-                    success.append(str(path) + '\\' + str(element))
-        for element in success:
-            try:
-                info = win32api.GetFileVersionInfo(element, "\\")
-                ms = info['FileVersionMS']
-                ls = info['FileVersionLS']
-                version.append(str(win32api.HIWORD(ms)) + '.' + str(win32api.LOWORD(ms)) + '.' + str(
-                    win32api.HIWORD(ls)) + '.' + str(win32api.LOWORD(ls)))
-            except:
-                version.append('Unknown Version')
-        for i in range(len(success)):
-            exes.append((success[i], version[i]))
-        return exes
-
     # To replace exe_exists. Thanks to https://gallery.technet.microsoft.com/ScriptCenter/154dcae0-57a1-4c6e-8f9f-b215904485b7/
     def installedPrograms(self):
         installed = []
@@ -241,6 +212,7 @@ class Audit:
             logging.info(str(v))
             return (DecodeProductKey(v))
 
+    # Update and change to use psutil only...This is just a mess
     def Calc_LAC_network_speed(self):
         down_time = 2
         i = 5
@@ -349,15 +321,10 @@ def Auditing(audit):
         }
         r = requests.post(audit.ADDRESS + 'add', json=payload)
     else:
-        exe_files = ["WRSA.exe", "QPOS.exe"]
         upload, download = audit.Calc_LAC_network_speed()
-        logging.debug('Upload and Download Done - ' + str(upload) + ' ' + str(download))
         ip = audit.network_ip()
-        logging.debug('Ip Address : ' + str(ip))
         hostname = audit.network_hostname()
-        logging.debug('Hostname : ' + str(hostname))
         mac = audit.network_mac()
-        logging.debug('Mac : ' + str(mac))
         this_os = audit.os_version()
         key = audit.license_key()
         mem_total = audit.mem_total()
@@ -369,7 +336,6 @@ def Auditing(audit):
         space = audit.space_info()
         tasks = audit.task()
         processes = audit.processes()
-        exes = audit.exe_exists(exe_files)
         programs = audit.installedPrograms()
         printers = audit.printerinfo()
         uptime = audit.upTime()
@@ -387,7 +353,6 @@ def Auditing(audit):
                 'mac': mac,
                 'tasks': tasks,
                 'installedPrograms': programs,
-                'exes': exes,
                 'services': services,
                 'processes': processes,
                 'harddisks': harddisks,
